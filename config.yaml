@@ -1,0 +1,53 @@
+# 三省六部 · 朝堂信息流模拟器
+# 所有可调项都在这里，改配置不改代码（reasonix §4）。
+
+server:
+  host: 127.0.0.1
+  port: 9031
+
+# 复用用户自己的可嵌入 agent 内核（回合循环 / 工具契约 / 防循环 / 事件流）
+kernel:
+  # 相对项目根（本机 = E:\Project\agent-core）；可用环境变量 EDICT_KERNEL_DIR 覆盖
+  dir: ../agent-core
+
+provider:
+  base_url: https://api.deepseek.com/v1
+  model: deepseek-flash
+  api_key_env: DEEPSEEK_API_KEY
+  temperature: 0.7
+  timeout_s: 120
+
+budget:
+  max_rounds_per_role: 5      # 单个角色基线轮数（尚书另算，见 roles.Role.rounds）
+  max_llm_calls: 120          # 一道旨意总共允许多次模型调用（硬顶）
+  max_depth: 4                # call_agent 嵌套深度上限
+  stall_timeout_s: 180        # 单个角色超过多久无产出算"滞碍"
+
+# 联网：scrapling MCP（复用 agent-core 的常驻网关，跑在 Scrapling 的 venv 里）
+mcp:
+  enabled: true
+  gateway_url: http://127.0.0.1:7878     # 独立端口，别跟 airi-lite 的 7877 抢
+  # 相对项目根；也可用 EDICT_MCP_PYTHON / EDICT_MCP_SCRIPT 覆盖
+  python: ../Scrapling-main/.venv/Scripts/python.exe
+  script: ../agent-core/tools/mcp_gateway.py
+  log: data/mcp_gateway.log
+  ready_timeout_s: 30
+  tools_ready_timeout_s: 30
+  call_timeout_ms: 60000
+  max_chars: 6000                         # 网页正文截断长度（省 token 也防跑题）
+  web_tools:                              # 只开放读取类
+    - scrapling_get
+    - scrapling_fetch
+    - scrapling_stealthy_fetch
+  servers:
+    - name: scrapling
+      command: ../Scrapling-main/.venv/Scripts/scrapling.exe   # 找不到时会退回 PATH 上的 scrapling
+      args: ["mcp"]
+      timeout_ms: 120000
+
+sandbox:
+  root: workspace             # 相对项目根；所有读写都被锁在这里面
+  # 六部只能写自己部门子目录，三省写 共议/
+  dept_write_only: true
+  max_write_bytes: 200000
+  max_read_bytes: 60000

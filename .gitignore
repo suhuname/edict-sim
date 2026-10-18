@@ -1,0 +1,23 @@
+# 本地运行时数据（不进版本库）
+workspace/
+data/
+doc/
+
+# 密钥与本地经验库
+.env
+.roo/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# 编辑器 / 系统
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log

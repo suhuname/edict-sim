@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>三省六部 · 朝堂信息流</title>
+<link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+<div class="paper-grain" aria-hidden="true"></div>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="seal">三省六部</span>
+    <div class="brand-text">
+      <h1>朝堂信息流</h1>
+      <p>模型驱动 · 沙箱落笔 · 全程可审计</p>
+    </div>
+  </div>
+  <div class="topmeta">
+    <div class="meta-item"><span class="meta-k">模型</span><span class="meta-v" id="meta-model">—</span></div>
+    <div class="meta-item"><span class="meta-k">调用</span><span class="meta-v" id="meta-calls">0</span></div>
+    <div class="meta-item"><span class="meta-k">用时</span><span class="meta-v" id="meta-time">0s</span></div>
+    <div class="meta-item"><span class="meta-k">令牌</span><span class="meta-v" id="meta-tokens">0</span></div>
+    <div class="meta-item"><span class="meta-k">联网</span><span class="meta-v" id="meta-web">…</span></div>
+    <button class="btn-ghost" id="btn-abort" title="叫停当前朝会">叫停</button>
+  </div>
+</header>
+
+<section class="decree">
+  <div class="decree-input">
+    <label for="decree-text">圣旨</label>
+    <textarea id="decree-text" rows="2" placeholder="陛下有何旨意？（写下要办的事，臣工自会分派）"></textarea>
+  </div>
+  <div class="decree-side">
+    <div class="presets" id="presets"></div>
+    <button class="btn-seal" id="btn-send">颁 旨</button>
+  </div>
+</section>
+
+<section class="rail-wrap">
+  <div class="rail" id="rail"></div>
+  <div class="rail-note" id="rail-note"></div>
+</section>
+
+<main class="stack">
+
+  <section class="panel bus-panel">
+    <div class="panel-head">
+      <h2>信息总线</h2>
+      <div class="filters" id="filters">
+        <button class="chip active" data-filter="all">全部</button>
+        <button class="chip" data-filter="doc">公文</button>
+        <button class="chip" data-filter="tool">用印</button>
+        <button class="chip" data-filter="think">思虑</button>
+        <button class="chip" data-filter="deny">朱批</button>
+      </div>
+    </div>
+    <div class="bus" id="bus">
+      <div class="bus-empty">静候圣旨。颁旨之后，每一道差遣、每一次用印、每一份文书都会在此流过。</div>
+    </div>
+    <button class="to-bottom" id="btn-to-bottom" type="button" hidden>
+      <span class="arrow">↓</span> 到最新 <span class="n" id="to-bottom-n"></span>
+    </button>
+  </section>
+
+  <section class="panel board-panel">
+    <div class="panel-head">
+      <h2>军机处看板</h2>
+      <span class="hint" id="board-hint">尚无旨意</span>
+    </div>
+    <div class="board" id="board"></div>
+  </section>
+
+  <section class="panel artifacts-panel">
+    <div class="panel-head">
+      <h2>产出 · 沙箱文书</h2>
+      <div class="head-actions">
+        <span class="hint" id="artifact-hint">—</span>
+        <button class="btn-ghost" id="btn-followup" title="在原旨意上续一轮，从太子重新走流程">回 奏</button>
+        <button class="btn-ghost" id="btn-export">导出本旨意</button>
+        <button class="btn-ghost" id="btn-export-all">导出全部</button>
+      </div>
+    </div>
+    <div class="artifacts" id="artifact-list"></div>
+  </section>
+
+  <section class="panel rosters">
+    <div class="panel-head">
+      <h2>十二官 · 权限</h2>
+      <span class="hint">点官可筛选总线 · 表格中 ● 为可差遣</span>
+    </div>
+    <div class="roster" id="roster"></div>
+    <div class="matrix-wrap">
+      <table class="matrix" id="matrix"></table>
+    </div>
+  </section>
+
+</main>
+
+<div class="modal" id="modal" hidden>
+  <div class="modal-card">
+    <div class="modal-head">
+      <span id="modal-title">文书</span>
+      <div class="modal-actions">
+        <button class="btn-ghost" id="modal-export">导出这份旨意的产出</button>
+        <button class="btn-ghost" id="modal-close">合上</button>
+      </div>
+    </div>
+    <div class="md" id="modal-body"></div>
+  </div>
+</div>
+
+<div class="modal" id="delete-modal" hidden>
+  <div class="modal-card narrow">
+    <div class="modal-head">
+      <span id="delete-head">删除旨意</span>
+      <button class="btn-ghost" id="delete-close">合上</button>
+    </div>
+    <div class="export-body">
+      <p class="export-tip" id="delete-tip">删除后不可恢复。</p>
+      <label class="del-check" for="del-purge">
+        <input type="checkbox" id="del-purge" checked />
+        <span id="del-purge-label">同时删除沙箱目录</span>
+      </label>
+      <p class="del-note" id="del-note">不勾选则只从看板移除，沙箱文件会留在原处（界面上看不到）。</p>
+      <div class="export-row">
+        <span class="hint" id="delete-hint"></span>
+        <button class="btn-seal small del-btn" id="delete-run">删 除</button>
+      </div>
+      <div class="export-result" id="delete-result"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="followup-modal" hidden>
+  <div class="modal-card narrow">
+    <div class="modal-head">
+      <span id="followup-head">回奏 · 续办一轮</span>
+      <button class="btn-ghost" id="followup-close">合上</button>
+    </div>
+    <div class="export-body">
+      <p class="export-tip" id="followup-tip">回奏不是新开旨意：它在原旨意上续一轮，从太子重新走三省六部，产出叠加在同一目录（文件名带轮次后缀）。</p>
+      <div class="attach" id="followup-files"></div>
+      <label class="export-label" for="followup-title">本轮圣意（要补强 / 修改什么）</label>
+      <textarea class="follow-input" id="followup-title" rows="2" placeholder="一句话说清本轮要完善的事，例：补充成本测算与上线回滚方案"></textarea>
+      <label class="export-label" for="followup-detail">详述（可选）</label>
+      <textarea class="follow-input" id="followup-detail" rows="4" placeholder="具体要求、口径、范围、交付物…"></textarea>
+      <div class="export-row">
+        <span class="hint" id="followup-hint"></span>
+        <button class="btn-seal small" id="followup-run">下 旨 续 办</button>
+      </div>
+      <div class="export-result" id="followup-result"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="export-modal" hidden>
+  <div class="modal-card narrow">
+    <div class="modal-head">
+      <span>导出到本地</span>
+      <button class="btn-ghost" id="export-close">合上</button>
+    </div>
+    <div class="export-body">
+      <p class="export-tip" id="export-tip">把这道旨意的全部文书复制到下面的目录（会在其中新建一个以旨意编号命名的子目录）。</p>
+      <label class="export-label" for="export-path">目标目录（绝对路径）</label>
+      <input class="export-input" id="export-path" type="text" spellcheck="false" />
+      <div class="export-row">
+        <button class="btn-ghost" id="export-reset">恢复默认</button>
+        <button class="btn-seal small" id="export-run">导 出</button>
+      </div>
+      <div class="export-result" id="export-result"></div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>
