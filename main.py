@@ -99,6 +99,12 @@ def main(argv: list[str] | None = None) -> int:
     from server.config import get_settings  # noqa: PLC0415
 
     s = get_settings()
+    if not s.kernel_dir.is_dir():
+        print(f"{TAG} 找不到内核目录：{s.kernel_dir}")
+        print(f"{TAG} 本项目的回合循环/工具契约借自 agent-core，请二选一：")
+        print(f"{TAG}   1) 把 agent-core 放在项目同级目录（默认 ../agent-core）")
+        print(f"{TAG}   2) 设置环境变量 EDICT_KERNEL_DIR，或改 config.yaml 的 kernel.dir")
+        return 2
     print(f"{TAG} 三省六部 · 朝堂信息流模拟器")
     print(f"{TAG} 神机内核: {s.kernel_dir}")
     print(f"{TAG} 模型: {s.model}  (调用上限 {s.max_llm_calls} 次/旨意)")
